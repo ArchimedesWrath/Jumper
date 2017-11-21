@@ -1,6 +1,6 @@
-function Platform(x, y) {
-    this.width = 40;
-    this.height = 10;
+function Platform(x, y, w, h) {
+    this.width = w;
+    this.height = h;
     this.x = x;
     this.y = y;
 
