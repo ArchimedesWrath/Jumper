@@ -1,16 +1,14 @@
 var player;
 var platforms = [];
+var bounceForce = -17;
 var hits = 0;
 var jumps = 0;
 var next = 0;
 var cleared = 0;
 var score = 0;
-var paused = false;
-var difficulty;
-var holdLeft=holdRight=false;
-var tutorial = false;
-var inTutorial = false;
-var gameOver = false;
+var highscore = localStorage.getItem('highscore');
+var paused, holdLeft, holdRight, tutorial, inTutorial, gameOver, increaseDif;
+paused = holdLeft = holdRight = tutorial = inTutorial = gameOver = increaseDif = false;
 
 //Platform starting dimensions
 var w = 40; 
@@ -18,7 +16,7 @@ var h = 10;
 
 function setup() {
   createCanvas(400, 600);
-  
+
   player = new Player(canvas.width / 2, canvas.height / 2, 20, 8);
   
   for(var i = 0; i < 10; i++) {
@@ -36,12 +34,19 @@ function draw() {
   inputs();
   pauseGame();
 
-  if(jumps % 5 === 0 && !player.hasJumped) player.hasJump = true;
+  if(jumps % 20 === 0 && !player.hasJumped) player.hasJump = true;
   if(player.hasJump) {
     fill(0, 155, 255);
     noStroke();
     ellipse(canvas.width - 20, 20, 10, 10);
   }
+
+  // textSize(12);
+  // fill(222, 222, 222);
+  // textAlign(CENTER);
+  // var diff = Math.floor(score / 2000);
+  // text(diff, canvas.width - 20, canvas.height - 15);
+
 
   intro();
   
@@ -75,7 +80,7 @@ function keyPressed() {
   } else if(keyCode === RIGHT_ARROW) {
     holdRight = true;
   } else if(keyCode === UP_ARROW) {
-    player.jump();
+    player.jump(bounceForce);
   } else if(keyCode === 32) {
     pause();
   } else if(keyCode === 83) {
@@ -89,17 +94,22 @@ function keyPressed() {
     }
   }
 
-  //Make fast falling work
-  //else if(keyCode === DOWN_ARROW && player.bounceForce >= -2) {
-  //  player.quickDrop(10);
-  //}
-
   return 0;
+}
+
+function randomPlatforms() {
+  platforms = [];
+  hits = 0;
+  for(var i = 0; i < 10; i++) {
+    platforms.push(new Platform(random(50, canvas.width - 50), random(player.x - 50, canvas.height - 50), w, h));
+  }
+
 }
 
 function playerDied() {
 
   if(player.y > canvas.height + 100) {
+    setHighScore();
     endGame();
     //player.y = canvas.height / 2;
     //player.x = canvas.width / 2;
@@ -116,30 +126,11 @@ function playerNext() {
   } 
 }
 
-function randomPlatforms() {
-  platforms = [];
-  hits = 0;
-  for(var i = 0; i < 10; i++) {
-    platforms.push(new Platform(random(50, canvas.width - 50), random(player.x - 50, canvas.height - 50), w, h));
-  }
-
-}
-
 function playerCleared() {
   if(hits === 10) {
     cleared++;
     randomPlatforms();
   } 
-}
-
-function pause() {
-  if(paused === false) {
-    paused = true;
-    noLoop();
-  } else if(paused === true) {
-    paused = false
-    loop();
-  }
 }
 
 //Can make this into powerup
@@ -150,6 +141,24 @@ function playerOffside() {
   } else if(player.x <= 0) {
     player.x = 10;
     holdLeft = false;
+  }
+}
+
+function playerScore() {
+  score = (jumps * 100) + (next * 100) + (cleared * 200);
+  textSize(12);
+  fill(222, 222, 222);
+  textAlign(LEFT);
+  text(score, 10, 15);
+}
+
+function pause() {
+  if(paused === false) {
+    paused = true;
+    noLoop();
+  } else if(paused === true) {
+    paused = false
+    loop();
   }
 }
 
@@ -165,12 +174,44 @@ function pauseGame() {
   }
 }
 
-function playerScore() {
-  score = (jumps * 100) + (next * 100) + (cleared * 200);
-  textSize(12);
-  fill(222, 222, 222);
-  textAlign(LEFT);
-  text(score, 10, 15);
+function restart() {
+    player.x = canvas.width / 2;
+    player.y = canvas.height / 2;
+    hits=jumps=next=cleared=score=0;
+    gameOver = false;
+    tutorial=inTutorial=false;
+    randomPlatforms();
+    intro();
+    location.reload();
+}
+
+function setHighScore() {
+  if(highscore !== null) {
+    if(score > highscore) {
+      localStorage.setItem('highscore', score);
+    }
+  } else {
+    localStorage.setItem('highscore', score);
+  }
+}
+
+function setDifficulty() {
+  var difficulty = score % 2000;
+  
+  if(difficulty === 0 && score !== 0) {
+    increaseDif = true;
+  }
+
+  if(increaseDif) {
+    jumps++;
+    increaseDif = false;
+    if(Math.floor(score / 2000) <= 8) {
+      player.gravity += Math.floor(score / 2000);
+      player.bounceForce = bounceForce;
+      bounceForce -= Math.floor(score / 2000);
+    }
+    if(w >= 20) w -= Math.floor(score / 2000);
+  }
 }
 
 function game() {
@@ -179,7 +220,6 @@ function game() {
   playerNext();
   playerOffside();
   playerCleared();
-  playerDied();
 
   for(var i = 0; i < platforms.length; i++) {
 
@@ -190,32 +230,18 @@ function game() {
       && player.x >= platforms[i].x - 20 
       && player.x <= platforms[i].x + 20) {
       player.hasJumped = false;
-      player.bounceForce = -17;
+      player.bounceForce = bounceForce;
       platforms.splice(i, 1);
       hits++;
       jumps++;
       
       //Fixes the platform flash
       for(var j = 0; j < platforms.length; j++) platforms[j].show(); 
-
     }
-
-    
   }  
-}
 
-function addDifficulty() {
-
-}
-
-function restart() {
-    player.x = canvas.width / 2;
-    player.y = canvas.height / 2;
-    hits=jumps=next=cleared=score=0;
-    gameOver = false;
-    tutorial=inTutorial=false;
-    randomPlatforms();
-    intro();
+  setDifficulty();
+  playerDied();
 }
 
 function endGame() {
@@ -228,8 +254,14 @@ function endGame() {
     textAlign(CENTER);
     text('Game Over', canvas.width / 2, canvas.height / 4);
     textSize(20);
-    var highscore = 'Highscore: ' + score;
-    text(highscore, canvas.width / 2, canvas.height / 5 + 100);
+    var highscoreText = 'Highscore: ' + highscore;
+    text(highscoreText, canvas.width / 2, canvas.height / 5 + 100);
+    var yourScore = 'Your score: ' + score;
+    text(yourScore, canvas.width / 2, canvas.height / 5 + 150);
+    if(score > highscore) {
+      textSize(35);
+      text('New Highscore!', canvas.width / 2, canvas.height / 5 + 200);
+    }
 }
 
 function intro() {

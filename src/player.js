@@ -32,9 +32,9 @@ function Player(x, y, size, grav) {
 
   }
 
-  this.jump = function() {
+  this.jump = function(bounceForce) {
     if(this.hasJump) {
-      this.bounceForce = -17;
+      this.bounceForce = bounceForce;
       this.hasJump = false;
       this.hasJumped = true;
     }
