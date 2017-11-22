@@ -10,6 +10,7 @@ var difficulty;
 var holdLeft=holdRight=false;
 var tutorial = false;
 var inTutorial = false;
+var gameOver = false;
 
 //Platform starting dimensions
 var w = 40; 
@@ -82,6 +83,9 @@ function keyPressed() {
       tutorial = true;
       inTutorial = false;
       loop();
+    } else if (gameOver) {
+      restart();
+      loop();
     }
   }
 
@@ -96,10 +100,10 @@ function keyPressed() {
 function playerDied() {
 
   if(player.y > canvas.height + 100) {
-    //endGame();
-    player.y = canvas.height / 2;
-    player.x = canvas.width / 2;
-    randomPlatforms();
+    endGame();
+    //player.y = canvas.height / 2;
+    //player.x = canvas.width / 2;
+    //randomPlatforms();
   } 
 
 }
@@ -132,8 +136,6 @@ function pause() {
   if(paused === false) {
     paused = true;
     noLoop();
-    console.log('Total jumps: ' + jumps + ', total new scenes: ' + next + ', total scenes cleared: ' + cleared);
-    console.log('Current difficulty: ' + difficulty + ', Current width: ' + w);
   } else if(paused === true) {
     paused = false
     loop();
@@ -204,6 +206,30 @@ function game() {
 
 function addDifficulty() {
 
+}
+
+function restart() {
+    player.x = canvas.width / 2;
+    player.y = canvas.height / 2;
+    hits=jumps=next=cleared=score=0;
+    gameOver = false;
+    tutorial=inTutorial=false;
+    randomPlatforms();
+    intro();
+}
+
+function endGame() {
+    gameOver = true;
+    noLoop();
+    fill(0, 155);
+    rect(0, 0, 1600, 2400);
+    textSize(32);
+    fill(255, 255, 255);
+    textAlign(CENTER);
+    text('Game Over', canvas.width / 2, canvas.height / 4);
+    textSize(20);
+    var highscore = 'Highscore: ' + score;
+    text(highscore, canvas.width / 2, canvas.height / 5 + 100);
 }
 
 function intro() {
