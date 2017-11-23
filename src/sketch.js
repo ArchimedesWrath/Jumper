@@ -34,7 +34,7 @@ function draw() {
   inputs();
   pauseGame();
 
-  if(jumps % 20 === 0 && !player.hasJumped) player.hasJump = true;
+  if(jumps % 10 === 0 && !player.hasJumped) player.hasJump = true;
   if(player.hasJump) {
     fill(0, 155, 255);
     noStroke();
