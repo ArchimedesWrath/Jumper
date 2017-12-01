@@ -225,10 +225,7 @@ function game() {
 
     platforms[i].show();
 
-    if(player.y >= platforms[i].y - 15 
-      && player.y <= platforms[i].y 
-      && player.x >= platforms[i].x - 20 
-      && player.x <= platforms[i].x + 20) {
+    if(platforms[i].hit(platforms[i].x, platforms[i].y, player.x, player.y)) {
       player.hasJumped = false;
       player.bounceForce = bounceForce;
       platforms.splice(i, 1);
